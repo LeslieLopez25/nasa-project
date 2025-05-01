@@ -4,6 +4,7 @@ const { parse } = require("csv-parse");
 
 const planets = require("./planets.mongo");
 
+// Filter function to determine if a planet is potentially habitable
 function isHabitablePlanet(planet) {
   return (
     planet["koi_disposition"] === "CONFIRMED" &&
@@ -13,6 +14,7 @@ function isHabitablePlanet(planet) {
   );
 }
 
+// Load and filter planet data from CSV, then save habitable planets to MongoDB
 function loadPlanetsData() {
   return new Promise((resolve, reject) => {
     fs.createReadStream(
@@ -20,18 +22,18 @@ function loadPlanetsData() {
     )
       .pipe(
         parse({
-          comment: "#",
-          columns: true,
+          comment: "#", // Skip comment lines
+          columns: true, // Parse each row as an object with column headers as keys
         })
       )
       .on("data", async (data) => {
         if (isHabitablePlanet(data)) {
-          savePlanet(data);
+          savePlanet(data); // Save only habitable planets
         }
       })
       .on("error", (err) => {
         console.log(err);
-        reject(err);
+        reject(err); // Complete once all planets are processed
       })
       .on("end", async () => {
         const countPlanetsFound = (await getAllPlanets()).length;
@@ -41,6 +43,7 @@ function loadPlanetsData() {
   });
 }
 
+// Fetch all habitable planets from the database (used by frontend or other logic)
 async function getAllPlanets() {
   return await planets.find(
     {},
@@ -51,6 +54,7 @@ async function getAllPlanets() {
   );
 }
 
+// Save a planet to the database, updating if it already exists
 async function savePlanet(planet) {
   try {
     await planets.updateOne(
@@ -61,7 +65,7 @@ async function savePlanet(planet) {
         keplerName: planet.kepler_name,
       },
       {
-        upsert: true,
+        upsert: true, // Insert if it doesn't exist
       }
     );
   } catch (err) {
