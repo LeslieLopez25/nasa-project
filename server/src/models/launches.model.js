@@ -7,6 +7,7 @@ const DEFAULT_FLIGHT_NUMBER = 100;
 
 const SPACEX_API_URL = "https://api.spacexdata.com/v4/launches/query";
 
+// Fetches SpaceX launch data from the API and stores it in the local MongoDB
 async function populateLaunches() {
   console.log("Downloading launch data...");
   const response = await axios.post(SPACEX_API_URL, {
@@ -58,6 +59,7 @@ async function populateLaunches() {
   }
 }
 
+// Checks if launch data is already loaded; if not, it triggers population
 async function loadLaunchData() {
   const firstLaunch = await findLaunch({
     flightNumber: 1,
@@ -71,16 +73,19 @@ async function loadLaunchData() {
   }
 }
 
+// Finds a specific launch from the database using a filter
 async function findLaunch(filter) {
   return await launchesDatabase.findOne(filter);
 }
 
+// Checks if a launch with a specific flight number exists
 async function existsLaunchWithId(launchId) {
   return await findLaunch({
     flightNumber: launchId,
   });
 }
 
+// Gets the most recent (highest) flight number from the database
 async function getLatestFlightNumber() {
   const latestLaunch = await launchesDatabase.findOne().sort("-flightNumber");
 
@@ -91,6 +96,7 @@ async function getLatestFlightNumber() {
   return latestLaunch.flightNumber;
 }
 
+// Retrieves all launches with pagination (skip/limit) and sorted by flight number
 async function getAllLaunches(skip, limit) {
   return await launchesDatabase
     .find({}, { _id: 0, __v: 0 })
@@ -99,6 +105,7 @@ async function getAllLaunches(skip, limit) {
     .limit(limit);
 }
 
+// Saves or updates a launch in the database using flightNumber as the unique identifier
 async function saveLaunch(launch) {
   await launchesDatabase.findOneAndUpdate(
     {
@@ -111,6 +118,7 @@ async function saveLaunch(launch) {
   );
 }
 
+// Adds a new launch to the database after verifying the target planet exists
 async function scheduleNewLaunch(launch) {
   const planet = await planets.findOne({
     keplerName: launch.target,
@@ -132,6 +140,7 @@ async function scheduleNewLaunch(launch) {
   await saveLaunch(newLaunch);
 }
 
+// // Aborts a launch by marking it as not upcoming and not successful
 async function abortLaunchById(launchId) {
   const aborted = await launchesDatabase.updateOne(
     {
