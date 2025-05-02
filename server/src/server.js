@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 8000;
 
 const server = http.createServer(app);
 
+// Start server with necessary pre-launch setup
 async function startServer() {
   await mongoConnect();
   await loadPlanetsData();
